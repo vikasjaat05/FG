@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Flâneur Staff',
   webDir: 'dist',
   server: {
-    url: 'https://portal.flaneurglobal.com',
+    url: 'https://fg-one-rho.vercel.app',
     cleartext: true,
     androidScheme: 'https'
   },

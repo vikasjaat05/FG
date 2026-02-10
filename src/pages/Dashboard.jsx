@@ -356,7 +356,7 @@ const AdminDashboard = ({ user, staffList }) => {
                 {selectedStaff && (
                     <StaffDetailModal 
                         staff={selectedStaff} 
-                        logs={allLogs.filter(l => l.Name === selectedStaff.name)}
+                        logs={allLogs.filter(l => (l.Name || "").toLowerCase() === (selectedStaff.name || "").toLowerCase())}
                         adminPin={user.pin}
                         onClose={() => setSelectedStaff(null)} 
                     />
@@ -430,13 +430,13 @@ const StaffDetailModal = ({ staff, logs, adminPin, onClose }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="fixed inset-0 z-[999] bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4"
         >
             <motion.div 
                 initial={{ y: "100%" }}
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
-                className="w-full max-w-lg bg-[#F8FAFF] sm:rounded-[48px] rounded-t-[48px] h-[92vh] overflow-hidden flex flex-col shadow-2xl"
+                className="w-full max-w-lg bg-[#F8FAFF] sm:rounded-[48px] rounded-t-[48px] h-[92vh] overflow-hidden flex flex-col shadow-2xl relative"
             >
                 <div className="p-8 pb-4 flex justify-between items-start">
                     <div className="flex items-center gap-5">
@@ -447,17 +447,22 @@ const StaffDetailModal = ({ staff, logs, adminPin, onClose }) => {
                             {staff.profile_pic ? (
                                 <img src={`${API_UPLOADS}${staff.profile_pic}`} alt={staff.name} className="w-full h-full object-cover" />
                             ) : (
-                                staff.name.charAt(0)
+                                (staff.name || "?").charAt(0)
                             )}
-                            {isEdit && <div className="absolute inset-0 bg-black/40 flex items-center justify-center text-[8px] text-white">UPLOAD</div>}
+                            {isEdit && <div className="absolute inset-0 bg-black/40 flex items-center justify-center text-[8px] font-black text-white px-2 text-center uppercase">Upload Photo</div>}
                         </div>
                         <input type="file" ref={fileRef} className="hidden" accept="image/*" />
                         <div>
-                            <h2 className="text-2xl font-black text-[#1A181E] tracking-tight leading-none mb-2">{staff.name}</h2>
-                            <span className="bg-asana-teal/10 text-asana-teal text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full">{staff.designation}</span>
+                            <h2 className="text-2xl font-black text-[#1A181E] tracking-tight leading-none mb-2">{staff.name || "Unknown"}</h2>
+                            <span className="bg-asana-teal/10 text-asana-teal text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full">{staff.designation || "Member"}</span>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-3 bg-white rounded-2xl shadow-sm text-[#8E8E93] active:scale-95 transition-all"><X size={24} /></button>
+                    <button 
+                        onClick={onClose} 
+                        className="p-3 bg-white rounded-2xl shadow-sm text-[#8E8E93] active:scale-95 transition-all border border-gray-100"
+                    >
+                        <X size={20} />
+                    </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-6 py-4 space-y-8">
@@ -479,7 +484,7 @@ const StaffDetailModal = ({ staff, logs, adminPin, onClose }) => {
                             <EditField label="Email" value={formData.email} onChange={(v) => setFormData({...formData, email: v})} />
                             <EditField label="Dept" value={formData.department} onChange={(v) => setFormData({...formData, department: v})} />
                             <EditField label="Login PIN" value={formData.newCode} onChange={(v) => setFormData({...formData, newCode: v})} />
-                            <Button className="w-full h-[64px] rounded-[24px] mt-6 bg-asana-teal font-black tracking-tight" onClick={handleSave} isLoading={loading}>Update System</Button>
+                            <Button className="w-full h-[64px] rounded-[24px] mt-6 bg-asana-teal font-black tracking-tight" onClick={handleSave} loading={loading}>Update System</Button>
                         </div>
                      ) : (
                         <div className="space-y-8 pb-10">
@@ -490,7 +495,7 @@ const StaffDetailModal = ({ staff, logs, adminPin, onClose }) => {
 
                             <div className="bg-white rounded-[32px] border border-white shadow-sm overflow-hidden">
                                 <InfoRow icon={<Phone size={16}/>} label="Phone" value={staff.phone} />
-                                <InfoRow icon={<MailIcon size={16}/>} label="Email" value={staff.email} />
+                                <InfoRow icon={<Mail size={16}/>} label="Email" value={staff.email} />
                                 <InfoRow icon={<Landmark size={16}/>} label="Bank A/C" value={staff.bank_account} />
                                 <InfoRow icon={<Shield size={16}/>} label="Auth PIN" value={staff.pin} />
                             </div>
@@ -498,7 +503,7 @@ const StaffDetailModal = ({ staff, logs, adminPin, onClose }) => {
                             {/* Monthly Calendar for Admin in Modal */}
                             <div className="bg-white rounded-[40px] p-8 shadow-sm border border-white">
                                 <div className="flex justify-between items-center mb-6">
-                                    <h3 className="text-[10px] font-black text-[#8E8E93] uppercase tracking-widest">Attendance Audit</h3>
+                                    <h3 className="text-[10px] font-black text-[#8E8E93] uppercase tracking-widest">Attendance Heatmap</h3>
                                     <select 
                                         className="bg-[#F8FAFF] text-[10px] font-black text-[#1A181E] border-none rounded-xl px-4 py-2 outline-none shadow-sm"
                                         value={selectedMonth}
@@ -510,7 +515,8 @@ const StaffDetailModal = ({ staff, logs, adminPin, onClose }) => {
                                 <div className="grid grid-cols-7 gap-2">
                                     {Array.from({ length: 31 }).map((_, i) => {
                                         const day = (i + 1).toString().padStart(2, '0');
-                                        const dayLogs = filteredLogs.filter(l => l.Date.startsWith(day));
+                                        const dStr = `${day}/${selectedMonth}`;
+                                        const dayLogs = filteredLogs.filter(l => l.Date === dStr);
                                         const types = dayLogs.map(l => l.Type);
 
                                         let style = "bg-[#F8FAFF] text-[#8E8E93]/20";
@@ -524,6 +530,39 @@ const StaffDetailModal = ({ staff, logs, adminPin, onClose }) => {
                                             </div>
                                         );
                                     })}
+                                </div>
+                            </div>
+
+                            {/* Detailed Activity Log for the Month */}
+                            <div className="bg-white rounded-[40px] p-8 shadow-sm border border-white">
+                                <h3 className="text-[10px] font-black text-[#8E8E93] uppercase tracking-widest mb-6 px-1">Detailed Logs</h3>
+                                <div className="space-y-4 pr-1">
+                                    {filteredLogs.length === 0 ? (
+                                        <div className="py-8 text-center text-[10px] font-black text-[#8E8E93] uppercase tracking-widest opacity-30 italic">No records for this month</div>
+                                    ) : (
+                                        [...filteredLogs].reverse().map((l, idx) => (
+                                            <div key={idx} className="flex items-center justify-between p-4 bg-[#F8FAFF] rounded-2xl border border-white group hover:bg-white hover:border-asana-teal/10 transition-all">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={cn(
+                                                        "w-10 h-10 rounded-xl flex items-center justify-center shadow-inner",
+                                                        l.Type === 'IN' || l.Type === 'OUT' ? "bg-green-50 text-green-600" :
+                                                        l.Type === 'LEAVE' ? "bg-red-50 text-red-600" : "bg-yellow-50 text-yellow-600"
+                                                    )}>
+                                                        {l.Type === 'IN' ? <Clock size={16} /> : 
+                                                         l.Type === 'OUT' ? <Clock size={16} /> :
+                                                         l.Type === 'LEAVE' ? <Umbrella size={16} /> : <Activity size={16} />}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-black text-[#1A181E] leading-none mb-1">{l.Type}</p>
+                                                        <p className="text-[10px] font-bold text-[#8E8E93] opacity-60 leading-none">{l.Date}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-xs font-black text-asana-teal tracking-tighter">{l.Time || '---'}</p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                             </div>
                         </div>
