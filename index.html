@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#24B3B8" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Flâneur Global Portal</title>
+  <!-- Preconnect for fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <!-- Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <style>
+    #offline-ui {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #FFFFFF;
+      z-index: 9999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #1A181E;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      padding: 2rem;
+    }
+
+    #offline-ui.visible {
+      display: flex;
+    }
+
+    .retry-btn {
+      margin-top: 2rem;
+      background: #24B3B8;
+      color: white;
+      border: none;
+      padding: 1rem 2.5rem;
+      border-radius: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 20px rgba(36, 179, 184, 0.2);
+      transition: all 0.2s;
+    }
+
+    .retry-btn:active {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+  <div id="offline-ui">
+    <div style="font-size: 4rem; margin-bottom: 1.5rem;">📡</div>
+    <h1 style="font-size: 1.8rem; font-weight: 800; letter-spacing: -0.025em;">Connection Lost</h1>
+    <p style="color: #666; margin-top: 0.75rem; max-width: 280px; line-height: 1.5;">Check your
+      internet and try again to access Flâneur Staff portal.</p>
+    <button class="retry-btn" onclick="window.location.reload()">Retry Connection</button>
+  </div>
+  <script type="module" src="/src/main.jsx"></script>
+  <script>
+    const ui = document.getElementById('offline-ui');
+    window.addEventListener('online', () => ui.classList.remove('visible'));
+    window.addEventListener('offline', () => ui.classList.add('visible'));
+    if (!navigator.onLine) ui.classList.add('visible');
+  </script>
+</body>
+
+</html>

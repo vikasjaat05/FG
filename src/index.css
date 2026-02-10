@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-DEFAULT: #24B3B8;
+  --color-brand-secondary: #1a9ba0;
+  --color-brand-dark: #127e82;
+
+  --font-family-sans: 'Plus Jakarta Sans', sans-serif;
+
+  --animate-fade-in: fadeIn 0.5s ease-out;
+  --animate-slide-up: slideUp 0.5s ease-out;
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+:root {
+  --bg: #F8FAFF;
+  --text: #1d1d1f;
+  --text-muted: #86868b;
+  --card-bg: #FFFFFF;
+  --card-border: rgba(0, 0, 0, 0.04);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-surface: rgba(255, 255, 255, 0.6);
+  --shadow: 0px 18px 40px rgba(112, 144, 176, 0.08);
+  --nav-text: rgba(29, 29, 31, 0.4);
+}
+
+/* Force Light Mode */
+body {
+  font-family: var(--font-family-sans);
+  background-color: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-x: hidden;
+}
+
+.glass-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow);
+  transition: background-color 0.4s, border-color 0.4s;
+}
+
+.glass-input {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  color: var(--text);
+  transition: all 0.3s ease;
+}
+
+.glass-input:focus {
+  border-color: var(--color-brand-DEFAULT);
+  outline: none;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+/* Animation Overrides */
+.animate-enter {
+  animation: enter 0.4s ease-out;
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Custom Utilities for Asana Theme */
+.text-asana-teal {
+  color: #24B3B8;
+}
+
+.bg-asana-teal {
+  background-color: #24B3B8;
+}
