@@ -105,82 +105,85 @@ const Attendance = () => {
                 <h1 className="text-2xl font-black text-[#1A181E] tracking-tight">Time Station</h1>
             </header>
 
-            <div className="bg-white rounded-[40px] p-8 pb-12 border border-white shadow-[0_20px_50px_rgba(0,0,0,0.03)] mx-1 text-center relative overflow-hidden">
-                <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-asana-teal/5 to-transparent -z-0" />
-                
-                <div className="relative z-10 flex flex-col items-center">
-                    <motion.div 
-                        animate={status === 'verifying' ? { scale: [1, 1.05, 1], rotate: [0, 5, -5, 0] } : {}}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className={cn(
-                            "w-56 h-56 rounded-full flex items-center justify-center border-[12px] bg-white transition-all duration-700 shadow-2xl relative",
-                            status === 'pending' ? "border-[#F8FAFF]" :
-                            status === 'verifying' ? "border-asana-teal/20" :
-                            status === 'success' ? "border-green-500/20" : "border-red-500/20"
-                        )}
-                    >
-                        {status === 'pending' && (
-                            <div className="flex flex-col items-center">
-                                <MapPin size={48} className="text-asana-teal mb-2 animate-bounce" />
-                                <p className="text-[10px] font-black uppercase tracking-widest text-[#8E8E93]">Ready to Scan</p>
-                            </div>
-                        )}
-                        {status === 'verifying' && (
-                             <div className="flex flex-col items-center">
-                                <Activity size={48} className="text-asana-teal mb-2 animate-pulse" />
-                                <p className="text-[10px] font-black uppercase tracking-widest text-asana-teal">Face Verified</p>
-                             </div>
-                        )}
-                        {status === 'success' && (
-                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-green-500">
-                                <CheckCircle size={64} />
-                            </motion.div>
-                        )}
-                        {status === 'failed' && (
-                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-red-500">
-                                <XCircle size={64} />
-                            </motion.div>
-                        )}
-                    </motion.div>
+            <div className="lg:grid lg:grid-cols-2 lg:gap-12 items-center">
+                <div className="bg-white rounded-[40px] p-8 pb-12 border border-white shadow-[0_20px_50px_rgba(0,0,0,0.03)] mx-1 text-center relative overflow-hidden h-full flex flex-col justify-center">
+                    <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-asana-teal/5 to-transparent -z-0" />
+                    
+                    <div className="relative z-10 flex flex-col items-center">
+                        <motion.div 
+                            animate={status === 'verifying' ? { scale: [1, 1.05, 1], rotate: [0, 5, -5, 0] } : {}}
+                            transition={{ duration: 2, repeat: Infinity }}
+                            className={cn(
+                                "w-56 h-56 lg:w-64 lg:h-64 rounded-full flex items-center justify-center border-[12px] bg-white transition-all duration-700 shadow-2xl relative",
+                                status === 'pending' ? "border-[#F8FAFF]" :
+                                status === 'verifying' ? "border-asana-teal/20" :
+                                status === 'success' ? "border-green-500/20" : "border-red-500/20"
+                            )}
+                        >
+                            {status === 'pending' && (
+                                <div className="flex flex-col items-center">
+                                    <MapPin size={48} className="text-asana-teal mb-2 animate-bounce" />
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#8E8E93]">Ready to Scan</p>
+                                </div>
+                            )}
+                            {status === 'verifying' && (
+                                 <div className="flex flex-col items-center">
+                                    <Activity size={48} className="text-asana-teal mb-2 animate-pulse" />
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-asana-teal">Face Verified</p>
+                                 </div>
+                            )}
+                            {status === 'success' && (
+                                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-green-500">
+                                    <CheckCircle size={64} />
+                                </motion.div>
+                            )}
+                            {status === 'failed' && (
+                                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-red-500">
+                                    <XCircle size={64} />
+                                </motion.div>
+                            )}
+                        </motion.div>
 
-                    <div className="mt-10 space-y-2">
-                        <h4 className="text-lg font-black text-[#1A181E] tracking-tight whitespace-nowrap">Scan for Verification</h4>
-                        <div className="flex items-center gap-2 justify-center opacity-40">
-                             <Globe size={12} className="text-asana-teal" />
-                             <span className="text-[9px] font-black uppercase tracking-widest">Geo-fencing Active</span>
+                        <div className="mt-10 space-y-2">
+                            <h4 className="text-lg font-black text-[#1A181E] tracking-tight whitespace-nowrap">Scan for Verification</h4>
+                            <div className="flex items-center gap-2 justify-center opacity-40">
+                                 <Globe size={12} className="text-asana-teal" />
+                                 <span className="text-[9px] font-black uppercase tracking-widest">Geo-fencing Active</span>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <div className="grid grid-cols-2 gap-4 px-2 mt-8 lg:mt-0">
+                    <ActionCard 
+                        icon={<Camera size={24} />} 
+                        label="Punch In" 
+                        desc="Start Shift"
+                        variant="primary"
+                        onClick={() => handleAction('IN')}
+                    />
+                    <ActionCard 
+                        icon={<XCircle size={24} />} 
+                        label="Punch Out" 
+                        desc="End Shift"
+                        variant="secondary"
+                        onClick={() => handleAction('OUT')}
+                    />
+                    <ActionCard 
+                        icon={<Clock size={22} />} 
+                        label="Half Day" 
+                        desc="Leave Early"
+                        onClick={() => handleAction('HALF DAY')}
+                    />
+                    <ActionCard 
+                        icon={<Umbrella size={22} />} 
+                        label="Mark Leave" 
+                        desc="Day Off"
+                        onClick={() => handleAction('LEAVE')}
+                    />
+                </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 px-2">
-                <ActionCard 
-                    icon={<Camera size={24} />} 
-                    label="Punch In" 
-                    desc="Start Shift"
-                    variant="primary"
-                    onClick={() => handleAction('IN')}
-                />
-                <ActionCard 
-                    icon={<XCircle size={24} />} 
-                    label="Punch Out" 
-                    desc="End Shift"
-                    variant="secondary"
-                    onClick={() => handleAction('OUT')}
-                />
-                <ActionCard 
-                    icon={<Clock size={22} />} 
-                    label="Half Day" 
-                    desc="Leave Early"
-                    onClick={() => handleAction('HALF DAY')}
-                />
-                <ActionCard 
-                    icon={<Umbrella size={22} />} 
-                    label="Mark Leave" 
-                    desc="Day Off"
-                    onClick={() => handleAction('LEAVE')}
-                />
-            </div>
 
             <AnimatePresence>
                 {reasonModal && (

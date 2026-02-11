@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { Home, User, Bell, Activity, Clock, Users, Search, ChevronRight, MessageSquare, CreditCard, Calendar, Filter, X, Edit2, Shield, Phone, Mail, Building, Landmark, Save, RefreshCw, LogOut as LogOutIcon, Umbrella, ChevronLeft, Globe, Send, MoreHorizontal } from 'lucide-react';
+import { Home, User, Bell, Activity, Clock, Users, Search, ChevronRight, MessageSquare, CreditCard, Calendar, Filter, X, Edit2, Shield, Phone, Mail, Building, Landmark, Save, RefreshCw, LogOut as LogOutIcon, Umbrella, ChevronLeft, Globe, Send, MoreHorizontal, ArrowLeft, Droplets, MapPin, Briefcase, Layers, Award, FileCheck, FileText, Camera } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import useAuthStore from '../store/authStore';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths } from 'date-fns';
@@ -39,7 +39,8 @@ const StaffDashboard = ({ user }) => {
     const fetchHistory = async () => {
         setLoading(true);
         try {
-            const response = await api.get(`?pin=${user.pin}&t=${Date.now()}`);
+            // Adding date range and limit to try and get all data requested by user (Dec 2025 to Feb 2026)
+            const response = await api.get(`?pin=${user.pin}&t=${Date.now()}&action=get_attendance&start_date=2025-12-01&end_date=2026-03-31&limit=50000`);
             if (response.data.attendance) {
                 setLogs(response.data.attendance);
             }
@@ -207,6 +208,8 @@ const AdminDashboard = ({ user, staffList }) => {
     const [selectedStaff, setSelectedStaff] = useState(null);
     const [greeting, setGreeting] = useState("");
 
+    const [viewMode, setViewMode] = useState("admin"); // "admin" or "personal"
+
     useEffect(() => {
         const hour = new Date().getHours();
         if (hour < 12) setGreeting("Good Morning");
@@ -215,7 +218,8 @@ const AdminDashboard = ({ user, staffList }) => {
 
         const fetchAll = async () => {
             try {
-                const response = await api.get(`?pin=${user.pin}&t=${Date.now()}`);
+                // Fetching with wide date range and high limit as requested
+                const response = await api.get(`?pin=${user.pin}&t=${Date.now()}&action=get_attendance&start_date=2025-12-01&end_date=2026-03-31&limit=100000`);
                 if (response.data.attendance) {
                     const logs = response.data.attendance;
                     setAllLogs(logs);
@@ -234,6 +238,21 @@ const AdminDashboard = ({ user, staffList }) => {
         fetchAll();
     }, [user.pin, staffList]);
 
+    if (viewMode === "personal") {
+        return (
+            <div className="space-y-4">
+                <Button 
+                    variant="outline" 
+                    className="ml-2 rounded-xl h-10 bg-white shadow-sm text-asana-teal font-black text-[10px] tracking-widest"
+                    onClick={() => setViewMode("admin")}
+                >
+                    <ArrowLeft size={14} className="mr-2" /> EXIT PERSONAL VIEW
+                </Button>
+                <StaffDashboard user={user} />
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-8 pb-32">
             <header className="flex justify-between items-center px-2">
@@ -242,6 +261,12 @@ const AdminDashboard = ({ user, staffList }) => {
                     <h1 className="text-2xl font-black text-[#1A181E] tracking-tight leading-none">Admin Center</h1>
                 </div>
                 <div className="flex gap-3">
+                    <button 
+                        onClick={() => setViewMode("personal")}
+                        className="h-12 px-4 bg-white rounded-2xl shadow-sm border border-gray-100 text-asana-teal font-black text-[10px] tracking-widest uppercase hover:bg-asana-teal/5 transition-all"
+                    >
+                        My Dashboard
+                    </button>
                     <button onClick={() => navigate('/messages')} className="p-3 bg-white rounded-2xl shadow-sm border border-gray-100 text-[#8E8E93] active:scale-95 transition-all relative">
                         <Bell size={20} />
                         <div className="absolute top-2 right-2.5 w-2 h-2 bg-asana-teal rounded-full border-2 border-white animate-ping" />
@@ -260,97 +285,93 @@ const AdminDashboard = ({ user, staffList }) => {
                 </div>
             </header>
 
-            <div className="grid grid-cols-3 gap-3 px-1">
+            <div className="grid grid-cols-3 lg:grid-cols-3 gap-3 lg:gap-6 px-1">
                 <StatCard label="Live" val={stats.present} color="text-green-500" />
                 <StatCard label="Leaves" val={stats.leave} color="text-red-600" />
                 <StatCard label="Total" val={stats.total} />
             </div>
 
-            {/* Premium Admin Activity List (No colored sidebars/SS, clean Asana look) */}
-            <div className="bg-white rounded-[40px] px-8 pt-8 pb-4 border border-white shadow-[0_20px_50px_rgba(0,0,0,0.03)] mx-1">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-[10px] font-black text-[#8E8E93] uppercase tracking-[0.2em]">Latest Activity</h3>
-                    <div className="flex gap-2">
-                         <div className="w-1.5 h-1.5 rounded-full bg-green-500/20" />
-                         <div className="w-1.5 h-1.5 rounded-full bg-green-500/40" />
-                         <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+            <div className="lg:grid lg:grid-cols-2 lg:gap-8 items-start">
+                {/* Premium Admin Activity List */}
+                <div className="bg-white rounded-[40px] px-8 pt-8 pb-4 border border-white shadow-[0_20px_50px_rgba(0,0,0,0.03)] mx-1 mb-8 lg:mb-0">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-[10px] font-black text-[#8E8E93] uppercase tracking-[0.2em]">Latest Activity</h3>
+                        <div className="flex gap-2">
+                             <div className="w-1.5 h-1.5 rounded-full bg-green-500/20" />
+                             <div className="w-1.5 h-1.5 rounded-full bg-green-500/40" />
+                             <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                        </div>
+                    </div>
+                    <div className="space-y-6 max-h-[450px] overflow-y-auto pr-1">
+                        {allLogs.slice(0, 15).map((l, i) => (
+                            <div key={i} className="flex items-center gap-5 group transition-all">
+                                <div className="w-12 h-12 rounded-2xl bg-[#F8FAFF] flex items-center justify-center text-asana-teal border border-gray-50 overflow-hidden shadow-inner shrink-0">
+                                     {staffList.find(s => s.name === l.Name)?.profile_pic ? (
+                                         <img src={`${API_UPLOADS}${staffList.find(s => s.name === l.Name).profile_pic}`} className="w-full h-full object-cover" />
+                                     ) : (
+                                         l.Name.charAt(0)
+                                     )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-black text-[#1A181E] tracking-tight mb-0.5 truncate">{l.Name}</p>
+                                    <p className="text-[10px] text-[#8E8E93] font-bold uppercase tracking-widest opacity-60">{l.Type} • {l.Time}</p>
+                                </div>
+                                <div className="text-right shrink-0">
+                                    <p className="text-[9px] font-black text-asana-teal/40 group-hover:text-asana-teal transition-colors tracking-tighter">{l.Date}</p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
-                <div className="space-y-6 max-h-[350px] overflow-y-auto pr-1">
-                    {allLogs.slice(0, 15).map((l, i) => (
-                        <div key={i} className="flex items-center gap-5 group transition-all">
-                            <div className="w-12 h-12 rounded-2xl bg-[#F8FAFF] flex items-center justify-center text-asana-teal border border-gray-50 overflow-hidden shadow-inner">
-                                 {staffList.find(s => s.name === l.Name)?.profile_pic ? (
-                                     <img src={`${API_UPLOADS}${staffList.find(s => s.name === l.Name).profile_pic}`} className="w-full h-full object-cover" />
-                                 ) : (
-                                     l.Name.charAt(0)
-                                 )}
-                            </div>
-                            <div className="flex-1">
-                                <p className="text-sm font-black text-[#1A181E] tracking-tight mb-0.5">{l.Name}</p>
-                                <p className="text-[10px] text-[#8E8E93] font-bold uppercase tracking-widest opacity-60">{l.Type} • {l.Time}</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-[9px] font-black text-asana-teal/40 group-hover:text-asana-teal transition-colors tracking-tighter">{l.Date}</p>
-                            </div>
+
+                {/* Quick Directory (Premium List) */}
+                <div className="px-2">
+                    <div className="flex justify-between items-center mb-6 px-2">
+                        <h3 className="text-xl font-black text-[#1A181E] tracking-tight">Staff Directory</h3>
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8E8E93]/40" size={14} />
+                            <input 
+                                type="text" 
+                                placeholder="Find staff..." 
+                                className="bg-white border-none rounded-2xl py-2 pl-10 pr-4 text-xs w-36 lg:w-48 focus:ring-2 focus:ring-asana-teal/10 shadow-sm transition-all outline-none font-medium"
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
                         </div>
-                    ))}
-                    {allLogs.length === 0 && (
-                        <div className="py-20 text-center opacity-20 flex flex-col items-center">
-                            <Activity size={32} className="mb-2" />
-                            <p className="text-[10px] font-black uppercase tracking-widest">No activity found</p>
-                        </div>
-                    )}
+                    </div>
+                    <div className="space-y-3 pb-8 max-h-[450px] lg:max-h-none lg:overflow-visible overflow-y-auto pr-1 lg:pr-0">
+                        {staffList?.filter(s => (s.role?.toLowerCase() || '') !== 'admin' && s.name.toLowerCase().includes(search.toLowerCase())).map((s, i) => (
+                            <motion.div 
+                                key={i} 
+                                whileTap={{ scale: 0.98 }}
+                                className="bg-white p-5 rounded-[32px] flex items-center justify-between border border-white shadow-sm hover:border-asana-teal/10 transition-all"
+                            >
+                                <div className="flex items-center gap-5 min-w-0 flex-1">
+                                    <div className="w-14 h-14 bg-[#F8FAFF] rounded-2xl border border-gray-50 flex items-center justify-center font-black text-asana-teal overflow-hidden relative shadow-inner shrink-0">
+                                         {s.profile_pic ? (
+                                             <img src={`${API_UPLOADS}${s.profile_pic}`} alt={s.name} className="w-full h-full object-cover" />
+                                         ) : (
+                                             s.name.charAt(0)
+                                         )}
+                                    </div>
+                                    <div className="min-w-0 pr-2 flex-1">
+                                        <p className="text-base font-black text-[#1A181E] tracking-tight leading-none mb-1.5 truncate">{s.name}</p>
+                                        <p className="text-[10px] text-[#8E8E93] uppercase font-black tracking-widest opacity-60 leading-none truncate">{s.designation || 'Staff'}</p>
+                                    </div>
+                                </div>
+                                <Button 
+                                    size="sm" 
+                                    variant="secondary" 
+                                    className="h-10 rounded-xl px-5 text-[10px] font-black tracking-widest bg-asana-teal/5 border border-asana-teal/10 text-asana-teal hover:bg-asana-teal hover:text-white transition-all shadow-sm shrink-0"
+                                    onClick={() => setSelectedStaff(s)}
+                                >
+                                    MANAGE
+                                </Button>
+                            </motion.div>
+                        ))}
+                    </div>
                 </div>
             </div>
 
-            {/* Quick Directory (Premium List) */}
-            <div className="px-2">
-                <div className="flex justify-between items-center mb-6 px-2">
-                    <h3 className="text-xl font-black text-[#1A181E] tracking-tight">Staff Directory</h3>
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8E8E93]/40" size={14} />
-                        <input 
-                            type="text" 
-                            placeholder="Find staff..." 
-                            className="bg-white border-none rounded-2xl py-2 pl-10 pr-4 text-xs w-36 focus:ring-2 focus:ring-asana-teal/10 shadow-sm transition-all outline-none font-medium"
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
-                    </div>
-                </div>
-                <div className="space-y-3 pb-8">
-                    {staffList?.filter(s => s.role !== 'admin' && s.name.toLowerCase().includes(search.toLowerCase())).map((s, i) => (
-                        <motion.div 
-                            key={i} 
-                            whileTap={{ scale: 0.98 }}
-                            className="bg-white p-5 rounded-[32px] flex items-center justify-between border border-white shadow-sm hover:border-asana-teal/10 transition-all"
-                        >
-                            <div className="flex items-center gap-5">
-                                <div className="w-14 h-14 bg-[#F8FAFF] rounded-2xl border border-gray-50 flex items-center justify-center font-black text-asana-teal overflow-hidden relative shadow-inner">
-                                     {s.profile_pic ? (
-                                         <img src={`${API_UPLOADS}${s.profile_pic}`} alt={s.name} className="w-full h-full object-cover" />
-                                     ) : (
-                                         s.name.charAt(0)
-                                     )}
-                                     <div className="absolute top-1 right-1 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white shadow-sm" />
-                                </div>
-                                <div>
-                                    <p className="text-base font-black text-[#1A181E] tracking-tight leading-none mb-1.5">{s.name}</p>
-                                    <p className="text-[10px] text-[#8E8E93] uppercase font-black tracking-widest opacity-60 leading-none">{s.designation}</p>
-                                </div>
-                            </div>
-                            <Button 
-                                size="sm" 
-                                variant="secondary" 
-                                className="h-10 rounded-xl px-5 text-[10px] font-black tracking-widest bg-asana-teal/5 border border-asana-teal/10 text-asana-teal hover:bg-asana-teal hover:text-white transition-all shadow-sm"
-                                onClick={() => setSelectedStaff(s)}
-                            >
-                                MANAGE
-                            </Button>
-                        </motion.div>
-                    ))}
-                </div>
-            </div>
 
             <AnimatePresence>
                 {selectedStaff && (
@@ -368,7 +389,20 @@ const AdminDashboard = ({ user, staffList }) => {
 
 const StaffDetailModal = ({ staff, logs, adminPin, onClose }) => {
     const [isEdit, setIsEdit] = useState(false);
-    const [formData, setFormData] = useState({ ...staff, newCode: staff.pin });
+    const [formData, setFormData] = useState({ 
+        ...staff, 
+        newCode: staff.pin,
+        dept: staff.department || staff.dept,
+        desig: staff.designation || staff.desig,
+        type: staff.employee_type || staff.type,
+        join: staff.joining_date || staff.join,
+        exp: staff.experience || staff.exp,
+        bank: staff.bank_name || staff.bank,
+        acc: staff.bank_account || staff.Account,
+        ifsc: staff.ifsc_code || staff.code,
+        adhar: staff.adhar_number || staff.adhar,
+        pan: staff.pan_number || staff.pan
+    });
     const [loading, setLoading] = useState(false);
     const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'MM/yyyy'));
     const fileRef = useRef(null);
@@ -382,7 +416,17 @@ const StaffDetailModal = ({ staff, logs, adminPin, onClose }) => {
         };
     });
 
+    const monthDate = new Date(selectedMonth.split('/')[1], selectedMonth.split('/')[0] - 1);
+    const mStart = startOfMonth(monthDate);
+    const mDays = eachDayOfInterval({ start: mStart, end: endOfMonth(monthDate) });
+    const firstDayIdx = mStart.getDay();
+
     const filteredLogs = logs.filter(l => l.Date.includes(selectedMonth));
+    const stats = {
+        present: new Set(filteredLogs.filter(l => l.Type === 'IN').map(l => l.Date)).size,
+        half: new Set(filteredLogs.filter(l => l.Type === 'HALF DAY').map(l => l.Date)).size,
+        leave: new Set(filteredLogs.filter(l => l.Type === 'LEAVE').map(l => l.Date)).size,
+    };
 
     const handleSave = async () => {
         setLoading(true);
@@ -393,14 +437,19 @@ const StaffDetailModal = ({ staff, logs, adminPin, onClose }) => {
             fd.append('name', staff.name);
             fd.append('phone', formData.phone || "");
             fd.append('email', formData.email || "");
-            fd.append('dept', formData.department || "");
-            fd.append('join', formData.joining_date || "");
+            fd.append('dept', formData.dept || "");
+            fd.append('desig', formData.desig || "");
+            fd.append('type', formData.type || "");
+            fd.append('join', formData.join || "");
             fd.append('state', formData.state || "");
-            fd.append('exp', formData.experience || "");
-            fd.append('bank_account', formData.bank_account || "");
-            fd.append('ifsc_code', formData.ifsc_code || "");
-            fd.append('adhar_number', formData.adhar_number || "");
-            fd.append('pan_number', formData.pan_number || "");
+            fd.append('country', formData.country || "");
+            fd.append('blood_group', formData.blood_group || "");
+            fd.append('exp', formData.exp || "");
+            fd.append('bank_name', formData.bank || "");
+            fd.append('bank_account', formData.acc || "");
+            fd.append('ifsc_code', formData.ifsc || "");
+            fd.append('adhar_number', formData.adhar || "");
+            fd.append('pan_number', formData.pan || "");
             fd.append('newCode', formData.newCode || "");
             
             if(fileRef.current?.files[0]) {
@@ -436,9 +485,9 @@ const StaffDetailModal = ({ staff, logs, adminPin, onClose }) => {
                 initial={{ y: "100%" }}
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
-                className="w-full max-w-lg bg-[#F8FAFF] sm:rounded-[48px] rounded-t-[48px] h-[92vh] overflow-hidden flex flex-col shadow-2xl relative"
+                className="w-full max-w-5xl bg-[#F8FAFF] sm:rounded-[48px] rounded-t-[48px] h-[92vh] overflow-hidden flex flex-col shadow-2xl relative"
             >
-                <div className="p-8 pb-4 flex justify-between items-start">
+                <div className="p-8 pb-4 flex justify-between items-start border-b border-gray-100/50 bg-white/50 backdrop-blur-sm sticky top-0 z-20">
                     <div className="flex items-center gap-5">
                          <div 
                             className="w-20 h-20 rounded-[28px] bg-white border-4 border-white flex items-center justify-center font-black text-asana-teal text-3xl overflow-hidden shadow-xl ring-1 ring-black/5 relative"
@@ -454,115 +503,186 @@ const StaffDetailModal = ({ staff, logs, adminPin, onClose }) => {
                         <input type="file" ref={fileRef} className="hidden" accept="image/*" />
                         <div>
                             <h2 className="text-2xl font-black text-[#1A181E] tracking-tight leading-none mb-2">{staff.name || "Unknown"}</h2>
-                            <span className="bg-asana-teal/10 text-asana-teal text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full">{staff.designation || "Member"}</span>
+                            <div className="flex flex-wrap gap-2">
+                                <span className="bg-asana-teal/10 text-asana-teal text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full">{staff.designation || staff.role || "Member"}</span>
+                                <span className="bg-gray-100 text-gray-500 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full">ID: {staff.id}</span>
+                            </div>
                         </div>
                     </div>
-                    <button 
-                        onClick={onClose} 
-                        className="p-3 bg-white rounded-2xl shadow-sm text-[#8E8E93] active:scale-95 transition-all border border-gray-100"
-                    >
-                        <X size={20} />
-                    </button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-8">
-                     <div className="bg-white rounded-[32px] p-2 shadow-sm border border-white">
+                    <div className="flex gap-3">
                          <button 
                             onClick={() => setIsEdit(!isEdit)}
                             className={cn(
-                                "w-full py-4 rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] transition-all",
-                                isEdit ? "bg-asana-teal text-white shadow-lg" : "bg-gray-50 text-[#8E8E93]"
+                                "px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border",
+                                isEdit ? "bg-asana-teal text-white border-asana-teal" : "bg-white text-[#8E8E93] border-gray-100 hover:border-asana-teal hover:text-asana-teal"
                             )}
                          >
-                             {isEdit ? 'Finish Editing' : 'Edit Staff Records'}
+                             {isEdit ? 'DISCARD' : 'EDIT STAFF'}
                          </button>
-                     </div>
+                         <button 
+                            onClick={onClose} 
+                            className="p-3 bg-white rounded-2xl shadow-sm text-[#8E8E93] active:scale-95 transition-all border border-gray-100 hover:bg-red-50 hover:text-red-500"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+                </div>
 
+                <div className="flex-1 overflow-y-auto px-6 py-6 pb-20">
                      {isEdit ? (
-                        <div className="space-y-4 px-2">
-                            <EditField label="Phone" value={formData.phone} onChange={(v) => setFormData({...formData, phone: v})} />
-                            <EditField label="Email" value={formData.email} onChange={(v) => setFormData({...formData, email: v})} />
-                            <EditField label="Dept" value={formData.department} onChange={(v) => setFormData({...formData, department: v})} />
-                            <EditField label="Login PIN" value={formData.newCode} onChange={(v) => setFormData({...formData, newCode: v})} />
-                            <Button className="w-full h-[64px] rounded-[24px] mt-6 bg-asana-teal font-black tracking-tight" onClick={handleSave} loading={loading}>Update System</Button>
+                        <div className="max-w-4xl mx-auto">
+                            <div className="lg:grid lg:grid-cols-2 lg:gap-8 space-y-4 lg:space-y-0 pb-10">
+                                <div className="space-y-4">
+                                    <EditField label="Full Name" value={formData.name} onChange={(v) => setFormData({...formData, name: v})} />
+                                    <EditField label="Email Address" value={formData.email} onChange={(v) => setFormData({...formData, email: v})} />
+                                    <EditField label="Phone Number" value={formData.phone} onChange={(v) => setFormData({...formData, phone: v})} />
+                                    <EditField label="Blood Group" value={formData.blood_group} onChange={(v) => setFormData({...formData, blood_group: v})} />
+                                    <EditField label="Access PIN" value={formData.newCode} onChange={(v) => setFormData({...formData, newCode: v})} />
+                                </div>
+                                <div className="space-y-4">
+                                    <EditField label="Department" value={formData.dept} onChange={(v) => setFormData({...formData, dept: v})} />
+                                    <EditField label="Designation" value={formData.desig} onChange={(v) => setFormData({...formData, desig: v})} />
+                                    <EditField label="Emp Type" value={formData.type} onChange={(v) => setFormData({...formData, type: v})} />
+                                    <EditField label="Joining Date" value={formData.join} onChange={(v) => setFormData({...formData, join: v})} />
+                                    <EditField label="Experience" value={formData.exp} onChange={(v) => setFormData({...formData, exp: v})} />
+                                </div>
+                            </div>
+                            <div className="lg:grid lg:grid-cols-2 lg:gap-8 space-y-4 lg:space-y-0 mt-8">
+                                <div className="space-y-4">
+                                    <EditField label="Bank Name" value={formData.bank} onChange={(v) => setFormData({...formData, bank: v})} />
+                                    <EditField label="Account Number" value={formData.acc} onChange={(v) => setFormData({...formData, acc: v})} />
+                                    <EditField label="IFSC Code" value={formData.ifsc} onChange={(v) => setFormData({...formData, ifsc: v})} />
+                                </div>
+                                <div className="space-y-4">
+                                    <EditField label="Aadhar Number" value={formData.adhar} onChange={(v) => setFormData({...formData, adhar: v})} />
+                                    <EditField label="PAN Number" value={formData.pan} onChange={(v) => setFormData({...formData, pan: v})} />
+                                </div>
+                            </div>
+                            <Button className="w-full h-16 rounded-3xl mt-12 bg-asana-teal font-black tracking-widest uppercase shadow-xl shadow-asana-teal/20" onClick={handleSave} loading={loading}>Save Detailed Changes</Button>
                         </div>
                      ) : (
-                        <div className="space-y-8 pb-10">
-                            <div className="grid grid-cols-2 gap-4">
-                                <QuickInfo label="Employee ID" val={`#${staff.id}`} />
-                                <QuickInfo label="Joined" val={staff.joining_date || 'New'} />
+                        <div className="space-y-8">
+                            {/* Monthly Summary Stats */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <QuickInfo label="Month Present" val={`${stats.present} Days`} icon={<Globe size={18} className="text-green-500" />} />
+                                <QuickInfo label="Half Days" val={`${stats.half} Days`} icon={<Clock size={18} className="text-yellow-500" />} />
+                                <QuickInfo label="Leaves Taken" val={`${stats.leave} Days`} icon={<Umbrella size={18} className="text-red-500" />} />
                             </div>
 
-                            <div className="bg-white rounded-[32px] border border-white shadow-sm overflow-hidden">
-                                <InfoRow icon={<Phone size={16}/>} label="Phone" value={staff.phone} />
-                                <InfoRow icon={<Mail size={16}/>} label="Email" value={staff.email} />
-                                <InfoRow icon={<Landmark size={16}/>} label="Bank A/C" value={staff.bank_account} />
-                                <InfoRow icon={<Shield size={16}/>} label="Auth PIN" value={staff.pin} />
-                            </div>
+                            <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
+                                {/* Left Column: Identity & Contact */}
+                                <div className="lg:col-span-4 space-y-8">
+                                    <div>
+                                        <h3 className="text-[10px] font-black text-[#8E8E93] uppercase tracking-[0.2em] ml-4 mb-3">Core Identity</h3>
+                                        <div className="bg-white rounded-[32px] border border-white shadow-sm overflow-hidden p-2">
+                                            <InfoRow icon={<User size={16}/>} label="Full Name" value={staff.name} />
+                                            <InfoRow icon={<Shield size={16}/>} label="Personal PIN" value={staff.pin} />
+                                            <InfoRow icon={<Briefcase size={16}/>} label="Role" value={staff.role || staff.designation} />
+                                            <InfoRow icon={<Calendar size={16}/>} label="Created At" value={staff.created_at || staff.crested} />
+                                        </div>
+                                    </div>
 
-                            {/* Monthly Calendar for Admin in Modal */}
-                            <div className="bg-white rounded-[40px] p-8 shadow-sm border border-white">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h3 className="text-[10px] font-black text-[#8E8E93] uppercase tracking-widest">Attendance Heatmap</h3>
-                                    <select 
-                                        className="bg-[#F8FAFF] text-[10px] font-black text-[#1A181E] border-none rounded-xl px-4 py-2 outline-none shadow-sm"
-                                        value={selectedMonth}
-                                        onChange={(e) => setSelectedMonth(e.target.value)}
-                                    >
-                                        {months.map(m => <option key={m.val} value={m.val}>{m.label}</option>)}
-                                    </select>
+                                    <div>
+                                        <h3 className="text-[10px] font-black text-[#8E8E93] uppercase tracking-[0.2em] ml-4 mb-3">Professional Docs</h3>
+                                        <div className="bg-white rounded-[32px] border border-white shadow-sm overflow-hidden p-2">
+                                            <InfoRow icon={<Building size={16}/>} label="Department" value={staff.department || staff.dept} />
+                                            <InfoRow icon={<Layers size={16}/>} label="Designation" value={staff.designation || staff.desig} />
+                                            <InfoRow icon={<Award size={16}/>} label="Experience" value={staff.experience || staff.exp} />
+                                            <InfoRow icon={<Calendar size={16}/>} label="Joining Date" value={staff.joining_date || staff.join} />
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="grid grid-cols-7 gap-2">
-                                    {Array.from({ length: 31 }).map((_, i) => {
-                                        const day = (i + 1).toString().padStart(2, '0');
-                                        const dStr = `${day}/${selectedMonth}`;
-                                        const dayLogs = filteredLogs.filter(l => l.Date === dStr);
-                                        const types = dayLogs.map(l => l.Type);
 
-                                        let style = "bg-[#F8FAFF] text-[#8E8E93]/20";
-                                        if (types.includes('LEAVE')) style = "bg-red-700 text-white";
-                                        else if (types.includes('HALF DAY')) style = "bg-yellow-400 text-black";
-                                        else if (types.includes('IN') || types.includes('OUT')) style = "bg-green-500 text-white";
-
-                                        return (
-                                            <div key={i} className={cn("aspect-square rounded-xl flex items-center justify-center text-[10px] font-black shadow-sm transition-all", style)}>
-                                                {i + 1}
+                                {/* Right Column: Personal, Financial & Activity */}
+                                <div className="lg:col-span-8 space-y-8 mt-8 lg:mt-0">
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                        <div>
+                                            <h3 className="text-[10px] font-black text-[#8E8E93] uppercase tracking-[0.2em] ml-4 mb-3">Communication</h3>
+                                            <div className="bg-white rounded-[32px] border border-white shadow-sm overflow-hidden p-2 h-full">
+                                                <InfoRow icon={<Mail size={16}/>} label="Email Address" value={staff.email} />
+                                                <InfoRow icon={<Phone size={16}/>} label="Phone Number" value={staff.phone} />
+                                                <InfoRow icon={<Globe size={16}/>} label="Native State" value={`${staff.state || 'N/A'}, ${staff.country || 'N/A'}`} />
                                             </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Detailed Activity Log for the Month */}
-                            <div className="bg-white rounded-[40px] p-8 shadow-sm border border-white">
-                                <h3 className="text-[10px] font-black text-[#8E8E93] uppercase tracking-widest mb-6 px-1">Detailed Logs</h3>
-                                <div className="space-y-4 pr-1">
-                                    {filteredLogs.length === 0 ? (
-                                        <div className="py-8 text-center text-[10px] font-black text-[#8E8E93] uppercase tracking-widest opacity-30 italic">No records for this month</div>
-                                    ) : (
-                                        [...filteredLogs].reverse().map((l, idx) => (
-                                            <div key={idx} className="flex items-center justify-between p-4 bg-[#F8FAFF] rounded-2xl border border-white group hover:bg-white hover:border-asana-teal/10 transition-all">
-                                                <div className="flex items-center gap-4">
-                                                    <div className={cn(
-                                                        "w-10 h-10 rounded-xl flex items-center justify-center shadow-inner",
-                                                        l.Type === 'IN' || l.Type === 'OUT' ? "bg-green-50 text-green-600" :
-                                                        l.Type === 'LEAVE' ? "bg-red-50 text-red-600" : "bg-yellow-50 text-yellow-600"
-                                                    )}>
-                                                        {l.Type === 'IN' ? <Clock size={16} /> : 
-                                                         l.Type === 'OUT' ? <Clock size={16} /> :
-                                                         l.Type === 'LEAVE' ? <Umbrella size={16} /> : <Activity size={16} />}
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs font-black text-[#1A181E] leading-none mb-1">{l.Type}</p>
-                                                        <p className="text-[10px] font-bold text-[#8E8E93] opacity-60 leading-none">{l.Date}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="text-xs font-black text-asana-teal tracking-tighter">{l.Time || '---'}</p>
-                                                </div>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-[10px] font-black text-[#8E8E93] uppercase tracking-[0.2em] ml-4 mb-3">KYC & Financial</h3>
+                                            <div className="bg-white rounded-[32px] border border-white shadow-sm overflow-hidden p-2 h-full">
+                                                <InfoRow icon={<Landmark size={16}/>} label="Bank Details" value={`${staff.bank_name || staff.bank} - ${staff.bank_account || staff.acc}`} />
+                                                <InfoRow icon={<FileCheck size={16}/>} label="Aadhar No" value={staff.adhar_number || staff.adhar} />
+                                                <InfoRow icon={<FileText size={16}/>} label="PAN No" value={staff.pan_number || staff.pan} />
                                             </div>
-                                        ))
-                                    )}
+                                        </div>
+                                    </div>
+
+                                    {/* Documents Preview */}
+                                    <div>
+                                        <h3 className="text-[10px] font-black text-[#8E8E93] uppercase tracking-[0.2em] ml-4 mb-3">Verified Documents</h3>
+                                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                                            <DocumentCard label="Aadhar Front" value={staff.adhar_front} />
+                                            <DocumentCard label="Aadhar Back" value={staff.adhar_back || staff.Adhar} />
+                                            <DocumentCard label="PAN Front" value={staff.pan_front} />
+                                        </div>
+                                    </div>
+
+                                    {/* Attendance Analytics */}
+                                    <div className="bg-white rounded-[40px] p-8 shadow-sm border border-white">
+                                        <div className="flex justify-between items-center mb-6">
+                                            <h3 className="text-[10px] font-black text-[#8E8E93] uppercase tracking-widest">Attendance Heatmap</h3>
+                                            <select 
+                                                className="bg-[#F8FAFF] text-[10px] font-black text-[#1A181E] border-none rounded-xl px-4 py-2 outline-none shadow-sm"
+                                                value={selectedMonth}
+                                                onChange={(e) => setSelectedMonth(e.target.value)}
+                                            >
+                                                {months.map(m => <option key={m.val} value={m.val}>{m.label}</option>)}
+                                            </select>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                                            {['S','M','T','W','T','F','S'].map(d => (
+                                                <span key={d} className="text-[9px] font-black text-[#8E8E93]/30">{d}</span>
+                                            ))}
+                                        </div>
+
+                                        <div className="grid grid-cols-7 gap-2">
+                                            {Array.from({ length: firstDayIdx }).map((_, i) => <div key={i} />)}
+                                            {mDays.map(day => {
+                                                const dStr = format(day, 'dd/MM/yyyy');
+                                                const dayLogs = filteredLogs.filter(l => l.Date === dStr);
+                                                const types = dayLogs.map(l => l.Type);
+
+                                                let style = "bg-[#F8FAFF] text-[#8E8E93]/20";
+                                                if (types.includes('LEAVE')) style = "bg-red-700 text-white shadow-sm shadow-red-700/20";
+                                                else if (types.includes('HALF DAY')) style = "bg-yellow-400 text-black shadow-sm shadow-yellow-400/20";
+                                                else if (types.includes('IN') || types.includes('OUT')) style = "bg-green-500 text-white shadow-sm shadow-green-500/20";
+
+                                                return (
+                                                    <div key={day.toString()} className={cn("aspect-square rounded-xl flex items-center justify-center text-[10px] font-black transition-all", style)}>
+                                                        {format(day, 'd')}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <h3 className="text-[10px] font-black text-[#8E8E93] uppercase tracking-widest ml-4">Activity Stream</h3>
+                                        <div className="space-y-3">
+                                            {filteredLogs.slice(0, 10).reverse().map((l, i) => (
+                                                <div key={i} className="bg-white p-4 rounded-3xl border border-white shadow-sm flex justify-between items-center transition-all hover:bg-[#F8FAFF]">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", l.Type === 'IN' ? "bg-green-50 text-green-600" : l.Type === 'OUT' ? "bg-orange-50 text-orange-600" : "bg-red-50 text-red-600")}>
+                                                            {l.Type === 'IN' ? <Globe size={18} /> : l.Type === 'OUT' ? <Activity size={18} /> : <Umbrella size={18} />}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-black text-[#1A181E]">{l.Type}</p>
+                                                            <p className="text-[9px] font-bold text-[#8E8E93] uppercase tracking-widest">{l.Date} • {l.Time}</p>
+                                                        </div>
+                                                    </div>
+                                                    {l.reason && <p className="text-[10px] font-bold italic text-[#8E8E93] bg-gray-50 px-3 py-1 rounded-full px-4">"{l.reason}"</p>}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -573,10 +693,27 @@ const StaffDetailModal = ({ staff, logs, adminPin, onClose }) => {
     );
 };
 
-const QuickInfo = ({ label, val }) => (
-    <div className="bg-white p-6 rounded-[32px] border border-white shadow-sm text-center">
+const QuickInfo = ({ label, val, icon }) => (
+    <div className="bg-white p-6 rounded-[32px] border border-white shadow-sm text-center flex flex-col items-center justify-center">
+        {icon && <div className="mb-2">{icon}</div>}
         <p className="text-[9px] font-black text-[#8E8E93] uppercase tracking-[0.2em] mb-1">{label}</p>
         <p className="text-sm font-black text-[#1A181E] uppercase tracking-tighter">{val}</p>
+    </div>
+);
+
+const DocumentCard = ({ label, value }) => (
+    <div className="bg-white p-4 rounded-[28px] border border-white shadow-sm flex flex-col items-center">
+        <div className="w-full aspect-[4/3] bg-gray-50 rounded-2xl overflow-hidden mb-3 relative group">
+            {value ? (
+                <img src={`${API_UPLOADS}${value}`} alt={label} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+            ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-gray-200">
+                    <FileText size={32} />
+                    <span className="text-[8px] font-black uppercase mt-2">No Image</span>
+                </div>
+            )}
+        </div>
+        <p className="text-[9px] font-black text-[#8E8E93] uppercase tracking-widest text-center">{label}</p>
     </div>
 );
 
